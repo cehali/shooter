@@ -1,0 +1,18 @@
+.gameOver {
+  display: none;
+  opacity: 0.8;
+  background-color: grey;
+  position:fixed;
+  width:100%;
+  height:100%;
+  top:0px;
+  left:0px;
+  z-index:1000;
+}
+
+.gameOver--text {
+  font-size: 30px;
+  width: 50%;
+  margin: 200px auto;
+  text-align: center;
+}

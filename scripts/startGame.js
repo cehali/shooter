@@ -1,23 +1,33 @@
 let context;
+let requestId = [];
 
 function startGame() {
   gameBoardActions.create();
   heroActions.create();
-  gameBoard.enemies.push(new Enemy());
   sightActions.create();
   updateGameArea();
+  generateEnemy();
 };
 
 function updateGameArea() {
-  requestAnimationFrame(() => {
+  requestId.push(requestAnimationFrame(() => {
     gameBoardActions.update();
     heroActions.update();
     gameBoard.enemies.map(enemy => enemy.update());
     sightActions.update();
     gameBoard.shotsFired.map((shot, index) => shot.update(index));
     updateGameArea();
-  });
+  }));
 };
+
+function generateEnemy() {
+  setInterval(() => {
+    if (gameBoard.enemies.length < 10) {
+      gameBoard.enemies.push(new Enemy())
+      generateEnemy();
+    }
+  }, 500);
+}
 
 const gameBoard = {
   width: 1000,
@@ -42,8 +52,8 @@ const gameBoardActions = {
 };
 
 const hero = {
-  x: 10,
-  y: 120,
+  x: gameBoard.width / 2,
+  y: gameBoard.height / 2,
   width: 30,
   height: 30,
   color: 'red',
@@ -54,7 +64,7 @@ const hero = {
 const heroActions = {
   create: () => {
     const {x, y, width, height, color} = hero;
-    context.fillStyle = color
+    context.fillStyle = color;
     context.fillRect(x, y, width, height);
   },
   update: () => {
@@ -65,7 +75,7 @@ const heroActions = {
     if (gameBoard.keysClicked && gameBoard.keysClicked['KeyS']) hero.translationY += 2;
     hero.x += hero.translationX;
     hero.y += hero.translationY;
-    context.fillStyle = color
+    context.fillStyle = color;
     context.fillRect(hero.x, hero.y, width, height);
     hero.translationX = 0;
     hero.translationY = 0;
@@ -83,12 +93,12 @@ const sight = {
 const sightActions = {
   create: () => {
     const {x, y, width, height, color} = sight;
-    context.fillStyle = color
+    context.fillStyle = color;
     context.fillRect(x, y, width, height);
   },
   update: () => {
     const {x, y, width, height, color} = sight;
-    context.fillStyle = color
+    context.fillStyle = color;
     context.fillRect(x, y, width, height);
   }
 };
@@ -125,7 +135,7 @@ class Shot {
       return true;
     });
     if (enemiesShot.length === 0) {
-      context.fillStyle = this.color
+      context.fillStyle = this.color;
       context.fillRect(this.x, this.y, this.width, this.height);
     } else {
       gameBoard.shotsFired.splice(index, 1);
@@ -135,8 +145,6 @@ class Shot {
 
 class Enemy {
   constructor() {
-    this.x = 300;
-    this.y = 300;
     this.width = 30;
     this.height = 30;
     this.color = 'blue';
@@ -144,12 +152,34 @@ class Enemy {
   }
 
   create() {
-    context.fillStyle = this.color
-    context.fillRect(this.x, this.y, this.width, this.height);
+    if (Math.random() >= 0.5) {
+      this.x = (Math.random() >= 0.5 ? 0 : Math.random() * gameBoard.width) - 100;
+      this.y = (this.x === 0 ? Math.random() * gameBoard.height : 0) - 100;
+    } else {
+      this.y = (Math.random() >= 0.5 ? gameBoard.height : Math.random() * gameBoard.height) + 100;
+      this.x = (this.y === gameBoard.height ? Math.random() * gameBoard.width : gameBoard.width) + 100;
+    }
+    context.fillStyle = this.color;
+    context.fillRect(this.x + 100, this.y + 100, this.width, this.height);
   };
 
   update() {
-    context.fillStyle = this.color
+    const speedPerTick = 1;
+    const deltaX = hero.x - this.x;
+    const deltaY = hero.y - this.y ;
+    const distance = Math.sqrt((deltaX * deltaX) + (deltaY * deltaY));
+    const ratio = speedPerTick / distance;
+    this.x += ratio * deltaX;
+    this.y += ratio * deltaY;
+    if (!(this.y > hero.y + hero.height ||
+      this.y + this.height < hero.y ||
+      this.x > hero.x + hero.width ||
+      this.x + this.width < hero.x
+    )) {
+      const gameOver = document.querySelector('.gameOver');
+      gameOver.style.display = 'block';
+    }
+    context.fillStyle = this.color;
     context.fillRect(this.x, this.y, this.width, this.height);
   };
 };
